@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>JavaScript MCQ Exam</title>
+<style>
+  :root{
+    --bg:#0b132b;
+    --card:#1c2541;
+    --ink:#e0e6ff;
+    --muted:#a7b0d5;
+    --accent:#5bc0be;
+    --accent2:#f9bc60;
+    --wrong:#ff6b6b;
+    --right:#39d98a;
+  }
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,"Noto Sans",sans-serif;line-height:1.5}
+  .wrap{max-width:1100px;margin:36px auto;padding:0 16px}
+  header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+  header h1{margin:0;font-size:clamp(20px,3vw,28px);letter-spacing:.3px}
+  .controls{display:flex;flex-wrap:wrap;gap:8px}
+  button{background:var(--accent);border:none;color:#07111f;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:600;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+  button.secondary{background:transparent;color:var(--ink);border:1px solid #334166}
+  button.warn{background:var(--wrong);color:#fff}
+  .score{font-weight:700;color:var(--accent2)}
+  .grid{display:grid;grid-template-columns:1fr;gap:14px}
+  .card{background:var(--card);border-radius:14px;padding:14px 16px;border:1px solid #243257}
+  .qhead{display:flex;align-items:flex-start;gap:8px;justify-content:space-between}
+  .badge{background:#243257;color:var(--muted);border-radius:999px;padding:2px 10px;font-size:12px}
+  .pts{color:var(--accent2);font-weight:700;margin-left:8px}
+  .qtext{margin:6px 0 10px 0;white-space:pre-wrap}
+  .code{background:#0f172a;color:#d6e0ff;border-radius:10px;padding:10px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:13px;overflow:auto}
+  .opts{display:grid;gap:8px;margin-top:6px}
+  label.opt{display:flex;gap:10px;align-items:flex-start;background:#0f1a38;border:1px solid #243257;padding:10px;border-radius:10px;cursor:pointer}
+  label.opt:hover{border-color:#345}
+  .opt input{margin-top:4px}
+  .meta{display:flex;gap:8px;align-items:center;margin-top:10px}
+  .status{font-size:12px;padding:2px 8px;border-radius:999px;background:#203056;color:#9fb0df;display:none}
+  .status.correct{display:inline-block;background:rgba(57,217,138,.15);color:var(--right)}
+  .status.wrong{display:inline-block;background:rgba(255,107,107,.15);color:var(--wrong)}
+  .explain{display:none;margin-top:10px;background:#0f172a;border:1px solid #243257;border-radius:10px;padding:10px;color:#cfe1ff}
+  .showAns{background:#152348;color:#cae; border:1px solid #2b3b64}
+  .correctOpt{outline:2px solid rgba(57,217,138,.7)}
+  .wrongOpt{outline:2px solid rgba(255,107,107,.75)}
+  footer{margin:24px 0 60px;color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>JavaScript MCQ Exam (100 Questions)</h1>
+    <div class="controls">
+      <button id="submitBtn">Submit & Score</button>
+      <button id="resetBtn" class="secondary">Reset</button>
+      <span class="score" id="scoreLine">Score: 0 / 0</span>
+    </div>
+  </header>
+
+  <div id="questions" class="grid"></div>
+
+  <footer>
+    <p>Instructions: choose one option per question. Click <em>Show Answer</em> to reveal the correct choice and a short explanation. Click <strong>Submit &amp; Score</strong> to grade your selections and see your final score.</p>
+  </footer>
+</div>
+
+<script>
+// Data model for 100 MCQs (from your list).
+// Each question has: id, q (text), code (optional), options [A-D], answer (0-3), points, explain.
+// Explanations are brief and targeted to the concept.
+const questions = [
+  {id:1, points:1,
+   q:"Which declaration is block-scoped?",
+   options:["var","let","Function parameter","with"],
+   answer:1,
+   explain:"'let' (and 'const') are block-scoped; 'var' is function-scoped. Parameters are function-scoped; 'with' is deprecated."},
+  {id:2, points:1,
+   q:"Which statement about hoisting is true?",
+   options:["let variables hoist and initialize to undefined","const variables are not hoisted at all","var declarations hoist; initialization does not","Function declarations do not hoist"],
+   answer:2,
+   explain:"'var' declarations hoist (as undefined), but assignment doesn't. 'let/const' are hoisted into TDZ; function declarations hoist."},
+  {id:3, points:1,
+   q:"What’s the result?",
+   code:'console.log(x); var x = 5;',
+   options:["5","undefined","ReferenceError","TypeError"],
+   answer:1,
+   explain:"'var x' is hoisted with value undefined until assignment runs; first log prints undefined."},
+  {id:4, points:1,
+   q:"Which creates a Number from a string with decimals?",
+   options:['parseInt("12.7")','Number("12.7")','+"12,7"','Boolean("12.7")'],
+   answer:1,
+   explain:"Number('12.7') parses decimal correctly. parseInt cuts decimals; '12,7' with comma fails for unary +."},
+  {id:5, points:1,
+   q:"Which returns NaN?",
+   options:['Number("48ddd")','parseFloat("45.8")','parseInt("45ads")','Number("485")'],
+   answer:0,
+   explain:'Number("48ddd") fails; parseInt("45ads") returns 45; parseFloat("45.8") is 45.8.'},
+  {id:6, points:1,
+   q:"Which checks for NaN correctly?",
+   options:["x === NaN","isNaN(x)","Number.isNaN(\"abc\")","x == NaN"],
+   answer:1,
+   explain:"isNaN(x) coerces and checks NaN; Number.isNaN requires actual NaN (and 'abc' is not NaN). NaN is never == or === to itself."},
+  {id:7, points:1,
+   q:"What does document.forms['registration']['username'] return?",
+   options:["Always an array","The input element named 'username' in that form","A NodeList","A RadioNodeList"],
+   answer:1,
+   explain:"Form controls are addressable by their name; returns the specific input element."},
+  {id:8, points:1,
+   q:"getElementsByName('sex') for radios returns:",
+   options:["Array","HTMLCollection","RadioNodeList","Set"],
+   answer:2,
+   explain:"A RadioNodeList (array-like) for inputs with same name (especially radios)."},
+  {id:9, points:1,
+   q:"To prevent a form submit from reloading the page in an inline handler:",
+   options:["return false;","return true;","event.stopPropagation()","event.stopImmediatePropagation()"],
+   answer:0,
+   explain:"In inline onsubmit/onclick, returning false prevents default navigation/submit."},
+  {id:10, points:1,
+   q:"Which event is best for validating as the user leaves a field?",
+   options:["input","blur","focus","change for text inputs on every keystroke"],
+   answer:1,
+   explain:"'blur' fires when the element loses focus; perfect for post-entry validation."},
+  {id:11, points:1,
+   q:"Which regex matches only letters, digits, spaces?",
+   options:["/^[A-Za-z0-9 ]+$/","/[A-Za-z0-9 ]/","/[A-Za-z0-9 ]*$/","/^\\w+$/"],
+   answer:0,
+   explain:"^...$ anchors full string; + requires one or more; \\w includes underscore so D is not exact."},
+  {id:12, points:1,
+   q:"Password regex ensures what?\n/^(?=.*[A-Za-z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{10,20}$/",
+   options:["10–20 chars, only letters and numbers","10–20 chars, at least letter, digit, special char","Exactly 10 chars with symbols","At least 20 chars"],
+   answer:1,
+   explain:"Lookaheads require letter, digit, special; length 10–20."},
+  {id:13, points:1,
+   q:"Array.prototype.slice() does:",
+   options:["Mutates array; returns removed items","Does not mutate; returns a shallow copy","Sorts array in place","Removes last element"],
+   answer:1,
+   explain:"slice is non-mutating and returns a shallow copy."},
+  {id:14, points:1,
+   q:"splice(start, deleteCount):",
+   options:["Non-mutating; returns new array","Mutates; returns removed items","Sorts items","Filters items"],
+   answer:1,
+   explain:"splice mutates the original array and returns removed elements."},
+  {id:15, points:1,
+   q:"Why use arr.slice() before .sort() in your labs?",
+   options:["To get a deep copy","To avoid mutating the original array","To convert to string","To filter duplicates"],
+   answer:1,
+   explain:"sort mutates; slice first to keep the original intact."},
+  {id:16, points:1,
+   q:"Sort numbers ascending:",
+   options:["arr.sort()","arr.sort((a,b)=>a-b)","arr.sort((a,b)=>b-a).reverse()","arr.toSorted() in ES5"],
+   answer:1,
+   explain:"Default sort is lexicographic; numeric ascending needs comparator (a-b)."},
+  {id:17, points:1,
+   q:"Max value of arr:",
+   options:["Math.max(arr)","Math.max.apply(null, arr)","Math.max(...arr)","Both B and C"],
+   answer:3,
+   explain:"Spread or apply expands elements; Math.max doesn't accept an array directly."},
+  {id:18, points:1,
+   q:"Remove duplicates:",
+   options:["arr.unique()","[...new Set(arr)]","arr.filter(n => n)","arr.distinct()"],
+   answer:1,
+   explain:"A Set enforces uniqueness; spread back to array."},
+  {id:19, points:1,
+   q:"Which is true about forEach?",
+   options:["It returns a new array","You can break out of it","It returns undefined","It sorts the array"],
+   answer:2,
+   explain:"forEach returns undefined and cannot be broken with break/return from outer function."},
+  {id:20, points:1,
+   q:"map vs forEach:",
+   options:["Both return arrays","map returns a new array; forEach returns undefined","forEach returns the same array","map mutates"],
+   answer:1,
+   explain:"map builds a new array; forEach is for side-effects."},
+  {id:21, points:1,
+   q:"Filter numbers > 50:",
+   options:["arr.filter(n => n > 50)","arr.where(n => n > 50)","arr.select(n => n > 50)","arr.grep(n => n > 50)"],
+   answer:0,
+   explain:"Array#filter is the correct JS method."},
+  {id:22, points:1,
+   q:"reduce((p,n)=>p+n,0) on [1,2,3] equals:",
+   options:["[1,2,3]","6","123","TypeError"],
+   answer:1,
+   explain:"Summing 1+2+3 with initial 0 => 6."},
+  {id:23, points:1,
+   q:"Template literal:",
+   options:["'hello ${name}'","\"hello ${name}\"","`hello ${name}`","sprintf(\"hello %s\", name)"],
+   answer:2,
+   explain:"Backticks enable interpolation with ${}."},
+  {id:24, points:1,
+   q:"Rest parameters collect:",
+   options:["A fixed two arguments","All remaining arguments into an array","Only numbers","Only strings"],
+   answer:1,
+   explain:"Rest '...args' captures remaining arguments into an array."},
+  {id:25, points:1,
+   q:"Spread ... in arrays:",
+   options:["Merges arrays by reference","Expands an iterable’s items","Stringifies array","Slices array"],
+   answer:1,
+   explain:"Spread expands elements in place, e.g., [...a, ...b]."},
+  {id:26, points:1,
+   q:"Arrow functions do not have:",
+   options:["Their own this","Lexical this","Short syntax","Ability to return values"],
+   answer:0,
+   explain:"Arrows capture 'this' lexically; they don't create their own."},
+  {id:27, points:1,
+   q:"Arrow functions do not have:",
+   options:["arguments object","Access to outer scope","Return statements","Parameters"],
+   answer:0,
+   explain:"Arrows lack their own 'arguments'; use rest parameters instead."},
+  {id:28, points:1,
+   q:"this inside an arrow used as an event handler refers to:",
+   options:["The element that fired the event","window or outer lexical this","The document","The event object"],
+   answer:1,
+   explain:"Arrows don't bind 'this'; in DOM listeners use function() to bind element as this."},
+  {id:29, points:1,
+   q:"In a class that extends another, what must happen in the constructor before using this?",
+   options:["Call this()","Call super()","Set a property","Nothing"],
+   answer:1,
+   explain:"Must call super() before accessing this in subclass constructor."},
+  {id:30, points:1,
+   q:"Private class fields syntax:",
+   options:["_id","private id;","#id","this.private.id"],
+   answer:2,
+   explain:"Private fields use the #name syntax in JS classes."},
+  {id:31, points:1,
+   q:"Accessing a private field outside the class:",
+   options:["Allowed via this.#id","Allowed via getter only","SyntaxError / TypeError if accessed directly","Automatically public"],
+   answer:2,
+   explain:"Direct access to #private outside class body is a syntax error."},
+  {id:32, points:1,
+   q:"A static field is accessed:",
+   options:["On the instance","On the class itself","On prototype","Not available in JS"],
+   answer:1,
+   explain:"Static members belong to the class, not instances."},
+  {id:33, points:1,
+   q:"What does Object.freeze(obj) do?",
+   options:["Deep freeze object and nested objects","Prevent add/remove/change of own properties (shallow)","Prevent property access","Seal and freeze are identical"],
+   answer:1,
+   explain:"freeze is shallow immutability of own props; nested objects remain mutable."},
+  {id:34, points:1,
+   q:"Default parameters evaluation order:",
+   options:["All at parse time","Left to right at call time","Right to left at parse time","Random"],
+   answer:1,
+   explain:"Defaults are evaluated left-to-right when the function is called."},
+  {id:35, points:1,
+   q:"Destructuring arrays:",
+   options:["let [a,b] = arr;","let {a,b} = arr;","let a = arr{0}","let a,b = arr[]"],
+   answer:0,
+   explain:"Array destructuring uses [ ]."},
+  {id:36, points:1,
+   q:"Destructuring objects:",
+   options:["let [id, Name] = obj;","let {id, Name} = obj;","let {0,1} = obj;","let = obj{id,Name}"],
+   answer:1,
+   explain:"Object destructuring uses {propNames}."},
+  {id:37, points:1,
+   q:"DOM selection: all <li> elements:",
+   options:["document.querySelector('li')","document.getElementById('li')","document.querySelectorAll('li')","document.lookupAll('li')"],
+   answer:2,
+   explain:"querySelectorAll returns a NodeList of all matches."},
+  {id:38, points:1,
+   q:"Difference HTMLCollection vs NodeList?",
+   options:["Both live; both array","HTMLCollection is live; NodeList from querySelectorAll is static","NodeList is live; HTMLCollection static","Both are arrays"],
+   answer:1,
+   explain:"HTMLCollection (e.g., getElementsByTagName) is live; qSA NodeList is static."},
+  {id:39, points:1,
+   q:"Add a click listener:",
+   options:["el.addEvent('click', fn)","el.on('click', fn)","el.onclick(fn)","el.addEventListener('click', fn)"],
+   answer:3,
+   explain:"Standard DOM is addEventListener; onclick is a property assignment not a function call."},
+  {id:40, points:1,
+   q:"Remove a listener successfully:",
+   options:["el.removeEventListener('click', () => fn())","el.removeEventListener('click', fnRef)","el.onclick = null; always removes all listeners","el.off('click', fnRef)"],
+   answer:1,
+   explain:"removeEventListener needs the same function reference used in addEventListener."},
+  {id:41, points:1,
+   q:"Event delegation pattern:",
+   options:["Attach to many children individually","Attach to parent; check e.target","Use capturing only","Always use inline handlers"],
+   answer:1,
+   explain:"Delegate on a parent and inspect event.target to act for children."},
+  {id:42, points:1,
+   q:"Prevent navigation of an <a> via listener:",
+   options:["return false; in addEventListener","event.preventDefault()","stopImmediatePropagation()","return;"],
+   answer:1,
+   explain:"preventDefault stops the default action (navigation)."},
+  {id:43, points:1,
+   q:"Best way to create a <tr> with cells:",
+   options:["innerHTML with concatenated strings only","document.createElement, append tds","document.write","alert"],
+   answer:1,
+   explain:"Use DOM APIs for safer, structured creation."},
+  {id:44, points:1,
+   q:"Set the text of an element safely:",
+   options:["el.innerHTML = userInput","el.textContent = userInput","document.write(userInput)","el.insertAdjacentHTML('beforeend', userInput)"],
+   answer:1,
+   explain:"textContent treats the content as text, avoiding HTML injection."},
+  {id:45, points:1,
+   q:"innerText vs textContent:",
+   options:["innerText includes hidden; textContent respects CSS","textContent is faster and returns text regardless of visibility","They're identical","textContent triggers reflow always"],
+   answer:1,
+   explain:"textContent is generally faster and returns all text; innerText is layout-aware."},
+  {id:46, points:1,
+   q:"On keypress allow digits only (ASCII codes):",
+   options:["48–57","65–90","97–122","33–47"],
+   answer:0,
+   explain:"'0'..'9' are 48..57."},
+  {id:47, points:1,
+   q:"setInterval returns:",
+   options:["The function result","An interval ID","A promise","Nothing"],
+   answer:1,
+   explain:"It returns a numeric (or object) timer ID to clear later."},
+  {id:48, points:1,
+   q:"Stop a running interval:",
+   options:["clearTimeout(id)","stopInterval(id)","clearInterval(id)","id = null"],
+   answer:2,
+   explain:"Use clearInterval with the interval ID."},
+  {id:49, points:1,
+   q:"Change style position:",
+   options:["el.style.left = 10;","el.style.left = '10px';","el.left = '10px';","el.css.left = '10px';"],
+   answer:1,
+   explain:"Style numeric CSS properties require units: '10px'."},
+  {id:50, points:1,
+   q:"window.open(url, name, features) returns:",
+   options:["A URL string","The opened window reference or null","Always a promise","document"],
+   answer:1,
+   explain:"Returns a Window reference (subject to popup blockers)." },
+  {id:51, points:1,
+   q:"Local storage stores values as:",
+   options:["Bytes","Strings","JSON","Buffers"],
+   answer:1,
+   explain:"All values are stored as strings; stringify/parse objects yourself."},
+  {id:52, points:1,
+   q:"To store an array in localStorage:",
+   options:['localStorage.setItem("a", arr)','localStorage.setItem("a", JSON.stringify(arr))','localStorage.storeArray("a", arr)','localStorage["a"] = arr'],
+   answer:1,
+   explain:"Stringify before storing."},
+  {id:53, points:1,
+   q:"Retrieve object from localStorage:",
+   options:['JSON.parse(localStorage.getItem("obj"))','localStorage.getJSON("obj")','localStorage.getItem("obj").toObject()','Not possible'],
+   answer:0,
+   explain:"Parse the stored string back to an object."},
+  {id:54, points:1,
+   q:"Cookie expiration format in classic API:",
+   options:["expires=YYYY-MM-DD","expires=UTC string date","expires=ms since epoch","expires=ISO 8601 only"],
+   answer:1,
+   explain:"Cookie 'expires' expects a UTC/GMT date string (e.g., toUTCString())."},
+  {id:55, points:1,
+   q:"Which prevents form reload in a submit handler (listener)?",
+   options:["return false;","event.preventDefault();","throw new Error();","event.stopPropagation();"],
+   answer:1,
+   explain:"In addEventListener, call preventDefault to stop submission/navigation."},
+  {id:56, points:1,
+   q:".sort() without comparator:",
+   options:["Numeric sort","Alphabetical (UTF-16) by string conversion","Random sort","Stable numeric ascending"],
+   answer:1,
+   explain:"Items are converted to strings and compared lexicographically."},
+  {id:57, points:1,
+   q:"Correct case-insensitive string comparator:",
+   options:["(a,b)=>a-b","(a,b)=>a.toLowerCase()<b.toLowerCase()?1:-1","(a,b)=>a.localeCompare(b, undefined, {sensitivity:'base'})","(a,b)=>a.length-b.length"],
+   answer:2,
+   explain:"localeCompare with sensitivity:'base' does case-insensitive compare."},
+  {id:58, points:1,
+   q:"Which yields a shallow copy of an array?",
+   options:["arr.copy()","arr.slice()","arr.splice()","arr.assign()"],
+   answer:1,
+   explain:"slice() without args clones the array (shallow)." },
+  {id:59, points:1,
+   q:"document.querySelectorAll returns:",
+   options:["A live HTMLCollection","A static NodeList","An array","A Set"],
+   answer:1,
+   explain:"NodeList is static when returned by querySelectorAll."},
+  {id:60, points:1,
+   q:"In modules, to import a default export:",
+   options:["import { default } from './m.js'","import default from './m.js'","import Foo from './m.js'","import * from './m.js'"],
+   answer:2,
+   explain:"Use an arbitrary identifier: import Foo from './m.js' maps to default export."},
+  {id:61, points:1,
+   q:"In modules, named import syntax:",
+   options:["import Foo from './m.js' brings { Foo }","import { Foo } from './m.js'","import Foo as {name} from './m.js'","import 'Foo' from './m.js'"],
+   answer:1,
+   explain:"Braces import named exports."},
+  {id:62, points:1,
+   q:"ESM import bindings are:",
+   options:["Mutable by importer","Read-only views onto exporter’s values","Copied at import time","Writable if using 'as'"],
+   answer:1,
+   explain:"Live bindings but read-only from the importer side."},
+  {id:63, points:1,
+   q:"To use ESM in browser:",
+   options:["<script src='file.js'>","<script type='module' src='file.js'>","<script module src='file.js'>","<script async module src='file.js'> only"],
+   answer:1,
+   explain:"type='module' enables native ESM."},
+  {id:64, points:1,
+   q:"A promise is fulfilled when:",
+   options:["resolve(value) was called","reject(error) was called","throw happened","Synchronous function returned"],
+   answer:0,
+   explain:"Resolving a promise fulfills it."},
+  {id:65, points:1,
+   q:"What does then return?",
+   options:["The original promise","A new promise","Always the value passed","undefined"],
+   answer:1,
+   explain:"then() returns a new chained promise."},
+  {id:66, points:1,
+   q:"Order of logs?\nconsole.log('A');\nsetTimeout(()=>console.log('B'),0);\nPromise.resolve().then(()=>console.log('C'));\nconsole.log('D');",
+   options:["A D B C","A B C D","A D C B","C A D B"],
+   answer:2,
+   explain:"Microtasks (promise then) run before timers: A, D, C, B."},
+  {id:67, points:1,
+   q:"async function returns:",
+   options:["A value","A promise that resolves to the returned value","undefined","An iterator"],
+   answer:1,
+   explain:"async always returns a promise."},
+  {id:68, points:1,
+   q:"await can be used:",
+   options:["Anywhere in any script","Only inside async functions (or top-level in modules)","Only with setTimeout","Only with fetch"],
+   answer:1,
+   explain:"await is valid in async functions and top-level in ESM."},
+  {id:69, points:1,
+   q:"In your validation, why trim() or regex ^\\s+|\\s+$?",
+   options:["To remove internal spaces","To remove only leading spaces","To remove leading and trailing spaces","To replace commas"],
+   answer:2,
+   explain:"Trim both ends to avoid accidental whitespace-only inputs."},
+  {id:70, points:1,
+   q:"Email regex in the labs validates:",
+   options:["RFC complete emails","A simple pattern for most typical emails","Only .com domains","Only lowercase"],
+   answer:1,
+   explain:"It's a pragmatic (not exhaustive) check."},
+  {id:71, points:1,
+   q:"What does classList.add('Error') do?",
+   options:["Overwrites existing classes","Adds the class to the element’s class list","Sets inline style","Clears other classes"],
+   answer:1,
+   explain:"classList.add appends without removing existing classes."},
+  {id:72, points:1,
+   q:"Removing a row via a button inside its <td>:",
+   options:["btn.parentNode.remove()","btn.parentNode.parentNode.remove()","btn.remove()","document.body.removeChild(btn)"],
+   answer:1,
+   explain:"Move up to the <tr> (td.parentNode) then remove it."},
+  {id:73, points:1,
+   q:"In the labs, why was return false; used in checkAll() on submit?",
+   options:["To continue submit","To stop default submission/navigation","To stop bubbling only","To clear the form"],
+   answer:1,
+   explain:"Returning false in inline handlers cancels default behavior (submit/navigation)."},
+  {id:74, points:1,
+   q:"A function that builds a row from form values should:",
+   options:["Read from DOM directly in many places","Be a single responsibility helper called after validation","Mix validation and rendering","Only log values"],
+   answer:1,
+   explain:"Single responsibility: build & append row after data is validated."},
+  {id:75, points:1,
+   q:"Which is true about eval in the sum/product lab?",
+   options:["Safe for any user input","Avoided in production; only for controlled tasks","Required for sums","Parses JSON"],
+   answer:1,
+   explain:"eval can be dangerous; use only in controlled learning contexts."},
+  {id:76, points:1,
+   q:"What does super.draw() do in a subclass?",
+   options:["Calls static method of base","Calls overridden method on prototype chain","Creates a new instance","Nothing without bind"],
+   answer:1,
+   explain:"super.method() invokes parent class implementation."},
+  {id:77, points:1,
+   q:"Which is true about class inheritance:",
+   options:["extends copies methods into child","extends links prototypes; methods resolved by prototype chain","Methods are private","Child cannot override methods"],
+   answer:1,
+   explain:"Inheritance uses prototype chain; not copying."},
+  {id:78, points:1,
+   q:"Constructor functions pattern (pre-class):",
+   options:["function Emp(){} + new Emp()","Always arrow functions","Emp() without new is safe","Private fields exist by default"],
+   answer:0,
+   explain:"Use 'new' with constructor functions."},
+  {id:79, points:1,
+   q:"Setting a private value via closure in constructor functions (from labs):",
+   options:["Use var s inside constructor + this.getSalary = () => s;","Use this.#s","Use private s","Use Object.seal"],
+   answer:0,
+   explain:"Private via closure: define local var and expose getters/setters on this."},
+  {id:80, points:1,
+   q:"For a numeric-only input key filter, key codes you blocked were:",
+   options:["<48 || >57","<65 || >90","<97 || >122","<33 || >47"],
+   answer:0,
+   explain:"Digits 0–9 are 48..57; block outside that range."},
+  {id:81, points:1,
+   q:"document.querySelector('#id') returns:",
+   options:["Single element or null","NodeList","HTMLCollection","Always an element"],
+   answer:0,
+   explain:"Returns the first match or null if none."},
+  {id:82, points:1,
+   q:"Set attribute:",
+   options:["el.setProperty('href','…')","el.setAttr('href','…')","el.setAttribute('href','…')","el.href('…')"],
+   answer:2,
+   explain:"setAttribute(name, value) is the standard DOM API."},
+  {id:83, points:1,
+   q:"Get selected <option> text from a <select name='country'>:",
+   options:["frm['country'].text","frm['country'].options[frm['country'].selectedIndex].text","frm['country'].innerText","frm['country'].getText()"],
+   answer:1,
+   explain:"Read options[selectedIndex].text."},
+  {id:84, points:1,
+   q:"Radio validation “sex must be chosen” works by:",
+   options:["Checking value of the group element","Looping getElementsByName('sex') and checking .checked","Using select","required attribute was used"],
+   answer:1,
+   explain:"Loop through radios to see if any is checked."},
+  {id:85, points:1,
+   q:"In table building, why create td with textContent not innerHTML?",
+   options:["To allow HTML injection","To avoid HTML injection and treat text as text","It’s faster always","It makes numbers only"],
+   answer:1,
+   explain:"textContent avoids executing injected HTML."},
+  {id:86, points:1,
+   q:"A delete button handler created inside a loop needs:",
+   options:["IIFE or closure capturing index/row reference","eval","Global index only","with"],
+   answer:0,
+   explain:"Capture the specific row (or use e.target.closest('tr')) to delete the right one."},
+  {id:87, points:1,
+   q:"Filtering array of objects by property (salary > 2000):",
+   options:["arr.where(e=>e.salary>2000)","arr.filter(e=>e.salary>2000)","arr.select(e=>e.salary>2000)","arr.map(e=>e.salary>2000)"],
+   answer:1,
+   explain:"filter returns items matching predicate."},
+  {id:88, points:1,
+   q:"Sorting employees by dept asc then salary desc:",
+   options:["Two sorts back-to-back always correct","One comparator using chained comparisons","Sort by salary then dept only","Use filter then map"],
+   answer:1,
+   explain:"Use a single comparator: by dept asc, then salary desc."},
+  {id:89, points:1,
+   q:"Chained comparator example is closest to:",
+   options:["(a,b)=>a.dept.localeCompare(b.dept)||b.salary-a.salary","(a,b)=>b.dept.localeCompare(a.dept)||a.salary-b.salary","(a,b)=>a.salary-b.salary||a.dept-b.dept","(a,b)=>0"],
+   answer:0,
+   explain:"localeCompare for dept ascending; if equal, compare salary descending."},
+  {id:90, points:1,
+   q:"Get highest salary in each department (conceptually):",
+   options:["Group by dept then Math.max per group","Single global Math.max","reduceRight only","splice only"],
+   answer:0,
+   explain:"Group by key, then compute max within each group."},
+  {id:91, points:1,
+   q:"Object literal with computed property name:",
+   options:["{ [propName]: value }","{ (propName): value }","{ propName(): value }","{ ${propName}: value }"],
+   answer:0,
+   explain:"Use square brackets for computed property keys."},
+  {id:92, points:1,
+   q:"Freezing an object prevents:",
+   options:["Replacing nested array elements","Changing, adding, deleting own properties (shallow)","Reading properties","Function calls"],
+   answer:1,
+   explain:"freeze blocks changes to own props; nested objects still mutable."},
+  {id:93, points:1,
+   q:"In ESM, extension in browser imports should be:",
+   options:["Omitted",".mjs only",".js included in path",".ts also works in raw browser"],
+   answer:2,
+   explain:"Browsers require the exact path including .js unless server maps otherwise."},
+  {id:94, points:1,
+   q:"Import everything as a namespace:",
+   options:["import all from './m.js'","import * as mod from './m.js'","import { * as mod } from './m.js'","import { all } from './m.js'"],
+   answer:1,
+   explain:"import * as name gathers all exports under a namespace object."},
+  {id:95, points:1,
+   q:"Why this in arrow inside object method often surprises?",
+   options:["Arrow’s this is bound to surrounding (likely window), not the object","Arrow’s this is dynamic","Arrow always binds to the object","Arrow methods can’t access properties"],
+   answer:0,
+   explain:"Arrows don't rebind this; they capture from enclosing scope."},
+  {id:96, points:1,
+   q:"Form field value reading correctly:",
+   options:["el.value","el.textContent","el.innerText","el.getValue()"],
+   answer:0,
+   explain:"Use .value for input elements."},
+  {id:97, points:1,
+   q:"Which stops only event bubbling?",
+   options:["preventDefault()","stopPropagation()","stopImmediatePropagation()","Returning false in listener (addEventListener)"],
+   answer:1,
+   explain:"stopPropagation stops bubbling; preventDefault cancels default; stopImmediatePropagation also stops other listeners on same element."},
+  {id:98, points:1,
+   q:"stopImmediatePropagation() does:",
+   options:["Stop default only","Stop further listeners on same element and bubbling","Stop bubbling but allow other listeners on same element","Nothing in modern browsers"],
+   answer:1,
+   explain:"It blocks other listeners on the same element and stops bubbling."},
+  {id:99, points:1,
+   q:"Promise chain error handling:",
+   options:["Only final catch sees errors from whole chain","Each then must have its own catch","Errors cannot be caught","Only synchronous errors are caught"],
+   answer:0,
+   explain:"A trailing catch handles rejections from the entire chain unless handled earlier."},
+  {id:100, points:1,
+   q:"Why use defer when including classic scripts in HTML?",
+   options:["To block HTML parsing","To run after parsing, in order","To execute as soon as fetched, out of order","To convert to module scripts"],
+   answer:1,
+   explain:"defer executes after HTML parsing and preserves order among deferred scripts."}
+];
+
+// ---------- RENDER ----------
+const container = document.getElementById('questions');
+
+function makeOptionName(id){ return 'q' + id; }
+
+function render(){
+  container.innerHTML = '';
+  for(const q of questions){
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.id = q.id;
+    card.dataset.answer = q.answer;
+
+    const head = document.createElement('div');
+    head.className = 'qhead';
+    head.innerHTML = `<div><span class="badge">Q${q.id}</span><span class="pts">${q.points} pt</span></div>`;
+    card.appendChild(head);
+
+    const qtext = document.createElement('div');
+    qtext.className = 'qtext';
+    qtext.textContent = q.q;
+    card.appendChild(qtext);
+
+    if(q.code){
+      const pre = document.createElement('pre');
+      pre.className = 'code';
+      pre.textContent = q.code;
+      card.appendChild(pre);
+    }
+
+    const opts = document.createElement('div');
+    opts.className = 'opts';
+    const letters = ['A','B','C','D'];
+    q.options.forEach((opt,i) => {
+      const lab = document.createElement('label');
+      lab.className = 'opt';
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = makeOptionName(q.id);
+      input.value = i;
+      lab.appendChild(input);
+      const span = document.createElement('span');
+      span.innerHTML = `<strong>${letters[i]})</strong> ${opt}`;
+      lab.appendChild(span);
+      opts.appendChild(lab);
+    });
+    card.appendChild(opts);
+
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    const status = document.createElement('span');
+    status.className = 'status';
+    status.textContent = '—';
+    meta.appendChild(status);
+
+    const showBtn = document.createElement('button');
+    showBtn.className = 'showAns';
+    showBtn.type = 'button';
+    showBtn.textContent = 'Show Answer';
+    showBtn.addEventListener('click', () => toggleAnswer(card, q));
+    meta.appendChild(showBtn);
+
+    card.appendChild(meta);
+
+    const ex = document.createElement('div');
+    ex.className = 'explain';
+    ex.innerHTML = `<strong>Correct:</strong> ${letters[q.answer]} — ${escapeHtml(q.options[q.answer])}<br><em>Why:</em> ${escapeHtml(q.explain)}`;
+    card.appendChild(ex);
+
+    container.appendChild(card);
+  }
+  updateScoreLine(0, totalPoints());
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, s => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[s]));
+}
+
+function toggleAnswer(card, q){
+  // Reveal explanation, and visually mark the correct option
+  const ex = card.querySelector('.explain');
+  const showing = ex.style.display === 'block';
+  ex.style.display = showing ? 'none' : 'block';
+
+  const optLabels = card.querySelectorAll('label.opt');
+  optLabels.forEach((lab, i) => {
+    lab.classList.remove('correctOpt');
+    if(i === q.answer) lab.classList.add('correctOpt');
+  });
+}
+
+// ---------- GRADING ----------
+function totalPoints(){ return questions.reduce((s,q)=>s+q.points,0); }
+
+function grade(){
+  let score = 0;
+  const letters = ['A','B','C','D'];
+  document.querySelectorAll('.card').forEach(card => {
+    const id = Number(card.dataset.id);
+    const q = questions.find(x=>x.id===id);
+    const name = makeOptionName(id);
+    const chosen = card.querySelector('input[name="'+name+'"]:checked');
+    const status = card.querySelector('.status');
+    // clear styles first
+    card.querySelectorAll('label.opt').forEach(l => l.classList.remove('wrongOpt','correctOpt'));
+
+    if(!chosen){
+      status.textContent = 'No answer';
+      status.className = 'status wrong';
+      return;
+    }
+    const picked = Number(chosen.value);
+    if(picked === q.answer){
+      score += q.points;
+      status.textContent = `Correct (${letters[picked]})`;
+      status.className = 'status correct';
+      chosen.closest('label.opt').classList.add('correctOpt');
+    } else {
+      status.textContent = `Wrong — you chose ${letters[picked]}, correct is ${letters[q.answer]}`;
+      status.className = 'status wrong';
+      chosen.closest('label.opt').classList.add('wrongOpt');
+      // mark correct one as hint
+      const correctLabel = card.querySelectorAll('label.opt')[q.answer];
+      if(correctLabel) correctLabel.classList.add('correctOpt');
+    }
+  });
+  updateScoreLine(score, totalPoints());
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function updateScoreLine(score,total){
+  document.getElementById('scoreLine').textContent = `Score: ${score} / ${total}`;
+}
+
+function resetAll(){
+  document.querySelectorAll('input[type=radio]').forEach(r=>r.checked=false);
+  document.querySelectorAll('.status').forEach(s=>{s.textContent='—'; s.className='status';});
+  document.querySelectorAll('.explain').forEach(e=>e.style.display='none');
+  document.querySelectorAll('label.opt').forEach(l=>l.classList.remove('wrongOpt','correctOpt'));
+  updateScoreLine(0,totalPoints());
+}
+
+// ---------- INIT ----------
+render();
+document.getElementById('submitBtn').addEventListener('click', grade);
+document.getElementById('resetBtn').addEventListener('click', resetAll);
+</script>
+</body>
+</html>
