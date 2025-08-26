@@ -16,36 +16,17 @@ A single-file, self-contained web page that renders a large bank of JavaScript m
 
 ## 📦 What’s in this project?
 
-* `js_mcq_exam.html` — the entire app (HTML + CSS + JS in one file).
-  *(If you want the page to open at the root of a site, rename this to `index.html`.)*
-
-> If your generated file uses a different name, just substitute it everywhere below.
+* `index.html` — the entire app (HTML + CSS + JS in one file).
 
 ---
 
 ## ▶️ Run locally
 
-1. Download `js_mcq_exam.html` to your computer.
+1. Download `index.html` to your computer.
 2. Double-click it to open in your browser **or** right-click → **Open With…** → your browser.
 
    * Works in any modern browser (Chrome, Edge, Firefox, Safari).
    * Make sure JavaScript is enabled.
-
----
-
-## 🌐 Free hosting (quick options)
-
-* **GitHub Pages**
-  Create a repo → add `index.html` → **Settings → Pages** → deploy from `main` branch.
-  URL: `https://<your-username>.github.io/<repo>/`
-
-* **Netlify Drop**
-  Go to *Netlify Drop* → drag-and-drop the file or folder → instant URL.
-
-* **Vercel / Cloudflare Pages**
-  Import a GitHub repo → auto-deploy on each push.
-
-*(Pick GitHub Pages for “set-and-forget”, Netlify Drop for the fastest one-off upload.)*
 
 ---
 
